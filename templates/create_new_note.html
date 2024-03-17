@@ -1,10 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title id="page_title">New Note</title>
+    <meta >
 </head>
+
 <body>
-$END$
+<form>
+    
+    <h1>
+        <div id="note_title"></div>
+    </h1>
+    <div id="note_date" style="text-align: right"></div>
+    
+    <hr>
+<div id="note_data" style="height: max-content; width: max-content">
+    <textarea name="note_data" id="text_content" cols="25" rows="10">
+        
+    </textarea>
+</div>
+    <input type="submit" value="save" >
+</form>
+    
+    <script>
+        let note_title = document.getElementById('note_title')
+        let note_data =  document.getElementById('note_data')
+        let note_date =  document.getElementById('note_date')
+        let  updated_note_title = prompt('give title to new note')
+        note_title.innerHTML = updated_note_title
+        note_date.innerHTML = "" + new Date();
+
+        let page_title = document.getElementById('page_title')
+        
+        page_title.innerHTML += " | " + updated_note_title;
+    </script>
 </body>
 </html>
