@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Reader</title>
+</head>
+<body id="notes_window" style="width: 100%;">
+
+<label for="note_name">Note Name: </label><input type="text" name="note_name" id="note_name">
+<input type="button" name="adds" id="adds" value="Fetch Note" onclick="addNote();">
+<script !src="">
+    win = document.getElementById("notes_window");
+
+    myhtml = "<div style='background-image: linear-gradient(red,blue); height: 100px; width: 100%;'><div> <hr style='margin: 20px 0;'>"
+
+    function addNote(){
+        win.innerHTML += myhtml
+    }
+</script>
+</body>
+</html>
