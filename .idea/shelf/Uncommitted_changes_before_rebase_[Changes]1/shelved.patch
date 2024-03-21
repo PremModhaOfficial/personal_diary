@@ -1,0 +1,416 @@
+Index: personal_diary/urls.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>\"\"\"\r\nURL configuration for personal_diary project.\r\n\r\nThe `urlpatterns` list routes URLs to views. For more information please see:\r\n    https://docs.djangoproject.com/en/5.0/topics/http/urls/\r\nExamples:\r\nFunction views\r\n    1. Add an import:  from my_app import views\r\n    2. Add a URL to urlpatterns:  path('', views.home, name='home')\r\nClass-based views\r\n    1. Add an import:  from other_app.views import Home\r\n    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')\r\nIncluding another URLconf\r\n    1. Import the include() function: from django.urls import include, path\r\n    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))\r\n\"\"\"\r\nfrom django.contrib import admin\r\nfrom django.urls import path\r\n\r\nfrom Index.views import index, add_note, read_note\r\n\r\nurlpatterns = [\r\n    path('admin/', admin.site.urls),\r\n    path('', index, name='index'),\r\n    path('new_note', add_note, name='new_note'),\r\n    path('read_note', read_note, name='read_note'),\r\n]
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/personal_diary/urls.py b/personal_diary/urls.py
+--- a/personal_diary/urls.py	(revision e9f311fbb50e5fa021239894b7fa7affe44bc338)
++++ b/personal_diary/urls.py	(date 1710996174490)
+@@ -17,11 +17,12 @@
+ from django.contrib import admin
+ from django.urls import path
+ 
+-from Index.views import index, add_note, read_note
++from Index.views import index, add_note, read_note, fetch_note
+ 
+ urlpatterns = [
+     path('admin/', admin.site.urls),
+     path('', index, name='index'),
+     path('new_note', add_note, name='new_note'),
+     path('read_note', read_note, name='read_note'),
++    path("<str:note_name>/", fetch_note, name='fetch_note')
+ ]
+\ No newline at end of file
+Index: Index/admin.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from django.contrib import admin\r\n\r\n# Register your models here.\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Index/admin.py b/Index/admin.py
+--- a/Index/admin.py	(revision e9f311fbb50e5fa021239894b7fa7affe44bc338)
++++ b/Index/admin.py	(date 1710996174379)
+@@ -1,3 +1,8 @@
+ from django.contrib import admin
+ 
+ # Register your models here.
++from django.contrib import admin
++
++from .models import Note
++
++admin.site.register(Note)
+\ No newline at end of file
+Index: Index/models.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from django.db import models\r\n\r\n\r\n# Create your models here.\r\n\r\nclass Note(models.Model):\r\n    note_name = models.CharField(max_length=30)\r\n    pub_date = models.DateTimeField('date added')\r\n    note_file = models.FileField(upload_to='./uploaded_files')\r\n\r\n    def __str__(self):\r\n        return f'{self.note_name}: {self.pub_date}'
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Index/models.py b/Index/models.py
+--- a/Index/models.py	(revision e9f311fbb50e5fa021239894b7fa7affe44bc338)
++++ b/Index/models.py	(date 1710996174379)
+@@ -1,3 +1,5 @@
++from datetime import timezone, datetime
++
+ from django.db import models
+ 
+ 
+@@ -9,4 +11,7 @@
+     note_file = models.FileField(upload_to='./uploaded_files')
+ 
+     def __str__(self):
+-        return f'{self.note_name}: {self.pub_date}'
+\ No newline at end of file
++        return f'{self.note_name}: {self.pub_date}'
++
++    def was_published_recently(self):
++        return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
+\ No newline at end of file
+Index: templates/read_note.html
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><!doctype html>\r\n<html lang=\"en\">\r\n<head>\r\n    <meta charset=\"UTF-8\">\r\n    <meta name=\"viewport\"\r\n          content=\"width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0\">\r\n    <meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\">\r\n    <title>Reader</title>\r\n</head>\r\n<body id=\"notes_window\" style=\"width: 100%;\">\r\n\r\n<label for=\"note_name\">Note Name: </label><input type=\"text\" name=\"note_name\" id=\"note_name\">\r\n<input type=\"button\" name=\"adds\" id=\"adds\" value=\"Fetch Note\" onclick=\"addNote();\">\r\n<script !src=\"\">\r\n    win = document.getElementById(\"notes_window\");\r\n\r\n    myhtml = \"<div style='background-image: linear-gradient(red,blue); height: 100px; width: 100%;'><div> <hr style='margin: 20px 0;'>\"\r\n\r\n    function addNote(){\r\n        win.innerHTML += myhtml\r\n    }\r\n</script>\r\n</body>\r\n</html>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/templates/read_note.html b/templates/read_note.html
+--- a/templates/read_note.html	(revision e9f311fbb50e5fa021239894b7fa7affe44bc338)
++++ b/templates/read_note.html	(date 1710996174491)
+@@ -9,16 +9,13 @@
+ </head>
+ <body id="notes_window" style="width: 100%;">
+ 
+-<label for="note_name">Note Name: </label><input type="text" name="note_name" id="note_name">
+-<input type="button" name="adds" id="adds" value="Fetch Note" onclick="addNote();">
+-<script !src="">
+-    win = document.getElementById("notes_window");
++    {% if out %}
++        {% for s in out %}
++            {{ s }}
++        {% endfor %}
++    {% else %}
++        NO NO    
++    {% endif %}
+ 
+-    myhtml = "<div style='background-image: linear-gradient(red,blue); height: 100px; width: 100%;'><div> <hr style='margin: 20px 0;'>"
+-
+-    function addNote(){
+-        win.innerHTML += myhtml
+-    }
+-</script>
+ </body>
+ </html>
+\ No newline at end of file
+Index: Index/views.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from django.shortcuts import render\r\n\r\n\r\n# Create your views here.\r\n\r\ndef index(request):\r\n    return render(request, 'index.html')\r\n\r\n\r\ndef add_note(request):\r\n    return render(request, 'add_note.html')\r\n\r\n\r\ndef read_note(request):\r\n    return render(request, 'read_note.html')
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Index/views.py b/Index/views.py
+--- a/Index/views.py	(revision e9f311fbb50e5fa021239894b7fa7affe44bc338)
++++ b/Index/views.py	(date 1710996174380)
+@@ -1,5 +1,8 @@
++from django.http import HttpResponse
+ from django.shortcuts import render
+ 
++from Index.models import Note
++
+ 
+ # Create your views here.
+ 
+@@ -12,4 +15,10 @@
+ 
+ 
+ def read_note(request):
+-    return render(request, 'read_note.html')
+\ No newline at end of file
++    return render(request, 'read_note.html')
++
++
++def fetch_note(request, note_name):
++    out = Note.objects.order_by('-id')[:]
++    res = [].append(out)
++    return HttpResponse(res)
+\ No newline at end of file
+Index: Index/migrations/0002_rename_file_note_note_file.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Index/migrations/0002_rename_file_note_note_file.py b/Index/migrations/0002_rename_file_note_note_file.py
+new file mode 100644
+--- /dev/null	
++++ b/Index/migrations/0002_rename_file_note_note_file.py	
+@@ -0,0 +1,18 @@
++# Generated by Django 5.0.3 on 2024-03-19 04:53
++
++from django.db import migrations
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ('Index', '0001_initial'),
++    ]
++
++    operations = [
++        migrations.RenameField(
++            model_name='note',
++            old_name='file',
++            new_name='note_file',
++        ),
++    ]
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"10bad080-5423-4a53-a65d-6196352b6e03\" name=\"Changes\" comment=\"changed to uploading files\">\r\n      <change afterPath=\"$PROJECT_DIR$/Index/migrations/0001_initial.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/Index/models.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/Index/models.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/templates/add_note.html\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/templates/add_note.html\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/templates/read_note.html\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/templates/read_note.html\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"DjangoConsoleOptions\" custom-start-script=\"import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)\">\r\n    <option name=\"myCustomStartScript\" value=\"import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"HTML File\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"MarkdownSettingsMigration\">\r\n    <option name=\"stateVersion\" value=\"1\" />\r\n  </component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 7\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"2dlZOAMtdeERZDHeoFzW0R394Xy\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\">\r\n    <ConfirmationsSetting value=\"2\" id=\"Add\" />\r\n  </component>\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"ASKED_ADD_EXTERNAL_FILES\": \"true\",\r\n    \"DefaultHtmlFileTemplate\": \"HTML File\",\r\n    \"Django Server.personal_diary.executor\": \"Run\",\r\n    \"Python.python manage.py makemigrations.executor\": \"Run\",\r\n    \"RunOnceActivity.OpenDjangoStructureViewOnStart\": \"true\",\r\n    \"RunOnceActivity.OpenProjectViewOnStart\": \"true\",\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"django.template.preview.state\": \"SHOW_EDITOR_AND_PREVIEW\",\r\n    \"git-widget-placeholder\": \"master\",\r\n    \"ignore.virus.scanning.warn.message\": \"true\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"vue.rearranger.settings.migration\": \"true\"\r\n  }\r\n}]]></component>\r\n  <component name=\"RunAnythingCache\">\r\n    <option name=\"myCommands\">\r\n      <command value=\"python manage.py makemigrations\" />\r\n    </option>\r\n  </component>\r\n  <component name=\"RunManager\" selected=\"Python.python manage.py makemigrations\">\r\n    <configuration name=\"python manage.py makemigrations\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\">\r\n      <module name=\"personal_diary\" />\r\n      <option name=\"ENV_FILES\" value=\"\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <EXTENSION ID=\"PythonCoverageRunConfigurationExtension\" runner=\"coverage.py\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"manage.py\" />\r\n      <option name=\"PARAMETERS\" value=\"makemigrations\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"personal_diary\" type=\"Python.DjangoServer\" factoryName=\"Django server\">\r\n      <module name=\"personal_diary\" />\r\n      <option name=\"ENV_FILES\" value=\"\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n        <env name=\"DJANGO_SETTINGS_MODULE\" value=\"personal_diary.settings\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"false\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"launchJavascriptDebuger\" value=\"false\" />\r\n      <option name=\"port\" value=\"8000\" />\r\n      <option name=\"host\" value=\"localhost\" />\r\n      <option name=\"additionalOptions\" value=\"\" />\r\n      <option name=\"browserUrl\" value=\"\" />\r\n      <option name=\"runTestServer\" value=\"false\" />\r\n      <option name=\"runNoReload\" value=\"false\" />\r\n      <option name=\"useCustomRunCommand\" value=\"false\" />\r\n      <option name=\"customRunCommand\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"Python.python manage.py makemigrations\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-python-sdk-5a2391486177-2887949eec09-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-233.13763.11\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"10bad080-5423-4a53-a65d-6196352b6e03\" name=\"Changes\" comment=\"\" />\r\n      <created>1710584591039</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1710584591039</updated>\r\n      <workItem from=\"1710584611798\" duration=\"4435000\" />\r\n      <workItem from=\"1710592790222\" duration=\"780000\" />\r\n      <workItem from=\"1710598450571\" duration=\"581000\" />\r\n      <workItem from=\"1710694651830\" duration=\"4000\" />\r\n      <workItem from=\"1710744469549\" duration=\"212000\" />\r\n      <workItem from=\"1710828101791\" duration=\"26000\" />\r\n      <workItem from=\"1710819082469\" duration=\"4520000\" />\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"changed to uploading files\">\r\n      <option name=\"closed\" value=\"true\" />\r\n      <created>1710820359889</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1710820359889</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"2\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <option name=\"ADD_EXTERNAL_FILES_SILENTLY\" value=\"true\" />\r\n    <MESSAGE value=\"changed to uploading files\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"changed to uploading files\" />\r\n  </component>\r\n  <component name=\"com.intellij.coverage.CoverageDataManagerImpl\">\r\n    <SUITE FILE_PATH=\"coverage/personal_diary$python_manage_py_makemigrations.coverage\" NAME=\"python manage.py makemigrations Coverage Results\" MODIFIED=\"1710823623369\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision e9f311fbb50e5fa021239894b7fa7affe44bc338)
++++ b/.idea/workspace.xml	(date 1710996174378)
+@@ -4,11 +4,15 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="10bad080-5423-4a53-a65d-6196352b6e03" name="Changes" comment="changed to uploading files">
+-      <change afterPath="$PROJECT_DIR$/Index/migrations/0001_initial.py" afterDir="false" />
++    <list default="true" id="10bad080-5423-4a53-a65d-6196352b6e03" name="Changes" comment="added db?">
++      <change afterPath="$PROJECT_DIR$/Index/migrations/0002_rename_file_note_note_file.py" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/uploaded_files/exp.html" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/Index/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/Index/admin.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/Index/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/Index/models.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/templates/add_note.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/add_note.html" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/Index/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/Index/views.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/personal_diary/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/personal_diary/urls.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/templates/read_note.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/read_note.html" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+@@ -43,32 +47,59 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent"><![CDATA[{
+-  "keyToString": {
+-    "ASKED_ADD_EXTERNAL_FILES": "true",
+-    "DefaultHtmlFileTemplate": "HTML File",
+-    "Django Server.personal_diary.executor": "Run",
+-    "Python.python manage.py makemigrations.executor": "Run",
+-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
+-    "RunOnceActivity.OpenProjectViewOnStart": "true",
+-    "RunOnceActivity.ShowReadmeOnStart": "true",
+-    "django.template.preview.state": "SHOW_EDITOR_AND_PREVIEW",
+-    "git-widget-placeholder": "master",
+-    "ignore.virus.scanning.warn.message": "true",
+-    "node.js.detected.package.eslint": "true",
+-    "node.js.detected.package.tslint": "true",
+-    "node.js.selected.package.eslint": "(autodetect)",
+-    "node.js.selected.package.tslint": "(autodetect)",
+-    "nodejs_package_manager_path": "npm",
+-    "vue.rearranger.settings.migration": "true"
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
++    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
++    &quot;Django Server.personal_diary.executor&quot;: &quot;Run&quot;,
++    &quot;Python.python manage.py createsuperuser.executor&quot;: &quot;Run&quot;,
++    &quot;Python.python manage.py makemigrations.executor&quot;: &quot;Run&quot;,
++    &quot;Python.python manage.py migrate.executor&quot;: &quot;Run&quot;,
++    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
++    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR_AND_PREVIEW&quot;,
++    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
++    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
++    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
++    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
++    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
++    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+   }
+-}]]></component>
++}</component>
+   <component name="RunAnythingCache">
+     <option name="myCommands">
+       <command value="python manage.py makemigrations" />
++      <command value="python manage.py migrate" />
++      <command value="python manage.py createsuperuser" />
+     </option>
+   </component>
+-  <component name="RunManager" selected="Python.python manage.py makemigrations">
++  <component name="RunManager" selected="Django Server.personal_diary">
++    <configuration name="python manage.py createsuperuser" type="PythonConfigurationType" factoryName="Python" temporary="true">
++      <module name="personal_diary" />
++      <option name="ENV_FILES" value="" />
++      <option name="INTERPRETER_OPTIONS" value="" />
++      <option name="PARENT_ENVS" value="true" />
++      <envs>
++        <env name="PYTHONUNBUFFERED" value="1" />
++      </envs>
++      <option name="SDK_HOME" value="" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
++      <option name="IS_MODULE_SDK" value="true" />
++      <option name="ADD_CONTENT_ROOTS" value="true" />
++      <option name="ADD_SOURCE_ROOTS" value="true" />
++      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
++      <option name="SCRIPT_NAME" value="manage.py" />
++      <option name="PARAMETERS" value="createsuperuser" />
++      <option name="SHOW_COMMAND_LINE" value="false" />
++      <option name="EMULATE_TERMINAL" value="false" />
++      <option name="MODULE_MODE" value="false" />
++      <option name="REDIRECT_INPUT" value="false" />
++      <option name="INPUT_FILE" value="" />
++      <method v="2" />
++    </configuration>
+     <configuration name="python manage.py makemigrations" type="PythonConfigurationType" factoryName="Python" temporary="true">
+       <module name="personal_diary" />
+       <option name="ENV_FILES" value="" />
+@@ -85,6 +116,29 @@
+       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+       <option name="SCRIPT_NAME" value="manage.py" />
+       <option name="PARAMETERS" value="makemigrations" />
++      <option name="SHOW_COMMAND_LINE" value="false" />
++      <option name="EMULATE_TERMINAL" value="false" />
++      <option name="MODULE_MODE" value="false" />
++      <option name="REDIRECT_INPUT" value="false" />
++      <option name="INPUT_FILE" value="" />
++      <method v="2" />
++    </configuration>
++    <configuration name="python manage.py migrate" type="PythonConfigurationType" factoryName="Python" temporary="true">
++      <module name="personal_diary" />
++      <option name="ENV_FILES" value="" />
++      <option name="INTERPRETER_OPTIONS" value="" />
++      <option name="PARENT_ENVS" value="true" />
++      <envs>
++        <env name="PYTHONUNBUFFERED" value="1" />
++      </envs>
++      <option name="SDK_HOME" value="" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
++      <option name="IS_MODULE_SDK" value="true" />
++      <option name="ADD_CONTENT_ROOTS" value="true" />
++      <option name="ADD_SOURCE_ROOTS" value="true" />
++      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
++      <option name="SCRIPT_NAME" value="manage.py" />
++      <option name="PARAMETERS" value="migrate" />
+       <option name="SHOW_COMMAND_LINE" value="false" />
+       <option name="EMULATE_TERMINAL" value="false" />
+       <option name="MODULE_MODE" value="false" />
+@@ -119,6 +173,8 @@
+     </configuration>
+     <recent_temporary>
+       <list>
++        <item itemvalue="Python.python manage.py createsuperuser" />
++        <item itemvalue="Python.python manage.py migrate" />
+         <item itemvalue="Python.python manage.py makemigrations" />
+       </list>
+     </recent_temporary>
+@@ -144,7 +200,10 @@
+       <workItem from="1710694651830" duration="4000" />
+       <workItem from="1710744469549" duration="212000" />
+       <workItem from="1710828101791" duration="26000" />
+-      <workItem from="1710819082469" duration="4520000" />
++      <workItem from="1710819082469" duration="7309000" />
++      <workItem from="1710917262087" duration="131000" />
++      <workItem from="1710979709624" duration="106000" />
++      <workItem from="1710979895814" duration="220000" />
+     </task>
+     <task id="LOCAL-00001" summary="changed to uploading files">
+       <option name="closed" value="true" />
+@@ -154,7 +213,15 @@
+       <option name="project" value="LOCAL" />
+       <updated>1710820359889</updated>
+     </task>
+-    <option name="localTasksCounter" value="2" />
++    <task id="LOCAL-00002" summary="added db?">
++      <option name="closed" value="true" />
++      <created>1710823772841</created>
++      <option name="number" value="00002" />
++      <option name="presentableId" value="LOCAL-00002" />
++      <option name="project" value="LOCAL" />
++      <updated>1710823772841</updated>
++    </task>
++    <option name="localTasksCounter" value="3" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+@@ -163,9 +230,12 @@
+   <component name="VcsManagerConfiguration">
+     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+     <MESSAGE value="changed to uploading files" />
+-    <option name="LAST_COMMIT_MESSAGE" value="changed to uploading files" />
++    <MESSAGE value="added db?" />
++    <option name="LAST_COMMIT_MESSAGE" value="added db?" />
+   </component>
+   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+-    <SUITE FILE_PATH="coverage/personal_diary$python_manage_py_makemigrations.coverage" NAME="python manage.py makemigrations Coverage Results" MODIFIED="1710823623369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/personal_diary$python_manage_py_migrate.coverage" NAME="python manage.py migrate Coverage Results" MODIFIED="1710824054240" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/personal_diary$python_manage_py_makemigrations.coverage" NAME="python manage.py makemigrations Coverage Results" MODIFIED="1710824045173" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/personal_diary$python_manage_py_createsuperuser.coverage" NAME="python manage.py createsuperuser Coverage Results" MODIFIED="1710824106189" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: uploaded_files/exp.html
+===================================================================
+diff --git a/uploaded_files/exp.html b/uploaded_files/exp.html
+new file mode 100644
+--- /dev/null	
++++ b/uploaded_files/exp.html	
+@@ -0,0 +1,47 @@
++<!DOCTYPE html>
++<html lang="en">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <title>Online Editor</title>
++    <style>
++        #editor {
++            width: 100%;
++            height: 300px;
++        }
++    </style>
++</head>
++<body>
++    <textarea id="editor"></textarea>
++    <button onclick="repeater()">Run</button>
++    <div id="output"></div>
++
++    <div 
++    style="height: 100px; width: 100px; background-image: linear-gradient(red,blue);"
++    ></div>
++    
++    <input type="text" id="magick" name="magick">
++
++
++    <script>
++
++        function repeater() {
++            let num = parseInt(document.getElementById("magick").innerText);
++            for(let x = 0; x < num; x++) {
++                runCode();
++            }
++        }
++
++        function runCode() {
++            const code = document.getElementById("editor").value;
++            try {
++                let result  = eval(code);
++                document.getElementById("output").innerText += result +"\n";
++            } catch (error) {
++                document.getElementById("output").innerText = "Error: " + error.message;
++            }
++        }
++    </script>
++
++</body>
++</html>
+\ No newline at end of file
